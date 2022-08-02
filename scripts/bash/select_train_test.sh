@@ -1,0 +1,7 @@
+#!/bin/sh
+python ../../scripts/select_train_test.py --dataset='./geno_1000000_mt_1000000' --rr_geno=1000000 --rr_mt=1000000 --hyperparams='../../feature_model_select/oversampled_all/comorb_1/geno_1000000_mt_1000000' --out='./geno_1000000_mt_1000000' &
+python ../../scripts/select_train_test.py --dataset='./geno_10_mt_1' --rr_geno=10 --rr_mt=1 --hyperparams='../../feature_model_select/oversampled_all/comorb_1/geno_10_mt_1' --out='./geno_10_mt_1' &
+python ../../scripts/select_train_test.py --dataset='./geno_15_mt_1' --rr_geno=15 --rr_mt=1 --hyperparams='../../feature_model_select/oversampled_all/comorb_1/geno_15_mt_1' --out='./geno_15_mt_1' &
+python ../../scripts/select_train_test.py --dataset='./geno_10_mt_5' --rr_geno=10 --rr_mt=5 --hyperparams='../../feature_model_select/oversampled_all/comorb_1/geno_10_mt_5' --out='./geno_10_mt_5' &
+python ../../scripts/select_train_test.py --dataset='./geno_15_mt_5' --rr_geno=15 --rr_mt=5 --hyperparams='../../feature_model_select/oversampled_all/comorb_1/geno_15_mt_5' --out='./geno_15_mt_5' &
+python ../../scripts/select_train_test.py --dataset='./geno_5_mt_5' --rr_geno=5 --rr_mt=5 --hyperparams='../../feature_model_select/oversampled_all/comorb_1/geno_5_mt_5' --out='./geno_5_mt_5' &

@@ -1,0 +1,6 @@
+ /home/CAM/daguiar/bin/time -f '%E elapsed,%U user,%S system,%M memory,%K avgmem, %x status' python3 gridSearch.py ../../testing/170707_p1_5thcollumn.csv 0.04 115 
+/home/CAM/dmcconnell/.local/lib/python3.6/site-packages/pandas/compat/__init__.py:84: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
+  warnings.warn(msg)
+/home/CAM/dmcconnell/.local/lib/python3.6/site-packages/pandas/compat/__init__.py:84: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
+  warnings.warn(msg)
+23:08.39 elapsed,477.04 user,2890.88 system,2342592 memory,0 avgmem, 0 status
