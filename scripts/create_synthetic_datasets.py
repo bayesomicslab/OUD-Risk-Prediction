@@ -1,3 +1,11 @@
+'''
+@author: Sybille M. Legitime
+
+Create synthetic combined datasets
+n_cases=1000
+n_controls=1000
+'''
+
 import random
 import logging
 import argparse

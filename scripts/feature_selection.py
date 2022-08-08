@@ -1,3 +1,9 @@
+'''
+@author: Sybille M. Legitime
+
+Use backward stepwise regression to remove collinear features
+'''
+
 import argparse
 import pandas as pd
 import statsmodels.api as sm

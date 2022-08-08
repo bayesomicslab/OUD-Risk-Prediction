@@ -1,3 +1,9 @@
+'''
+@author: Sybille M. Legitime
+
+Aggregate evaluation results
+'''
+
 import argparse
 import glob
 import json

@@ -1,7 +1,12 @@
+'''
+@author: Sybille M. Legitime
+
+Ouput AGGREGATE  ROC and PR curves
+'''
+
 import json
-import glob
+import math
 import argparse
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -50,18 +55,52 @@ def output_roc_pr_curves(datalist, model_name):
 
   plt.savefig(ARGS.out)
 
-def agg_curves(data_dict):
-  metrics_array = ['fpr', 'tpr', 'precision', 'recall']
-  for metric in metrics_array:
-    length = max(map(len, data_dict[metric]))
+def display_roc_curves_grid(datalist, geno_mt_config, model_name):
+  cols = 3
+  rows = math.ceil(len(geno_mt_config) / cols)
+  line_weight=2
+  label_size=12
+  title_size=16
 
-    data_dict[metric] = np.concatenate([np.array([np.pad(a, (0, length - len(a)), 'maximum')]) for a in data_dict[metric]], axis=0)
-    data_dict[metric] = np.mean(data_dict[metric], axis=0)
+  titles_dict = {
+      'geno_1000000_mt_1000000': r'$(g,m)=(\infty, \infty)$', 
+      'geno_10_mt_1': r'$(g,m)=(10, 1)$', 
+      'geno_10_mt_5': r'$(g,m)=(10, 5)$', 
+      'geno_15_mt_1': r'$(g,m)=(15, 1)$', 
+      'geno_15_mt_5': r'$(g,m)=(15, 5)$', 
+      'geno_5_mt_5': r'$(g,m)=(5, 5)$'
+  }
 
-  data_dict['roc_auc'] = np.mean(np.array(data_dict['roc_auc']))
-  data_dict['pr_auc'] = np.mean(np.array(data_dict['pr_auc']))
+  fig, axs = plt.subplots(rows, cols, sharex='col', sharey='row', figsize=(16, rows * 4))
 
-  return data_dict
+  for i, config in enumerate(geno_mt_config):
+      i_row = i // cols
+      i_col = i % cols
+
+      res_merged = datalist[0]
+      res_mt = datalist[1]
+      res_var = datalist[2]
+
+      COLOR_MERGED = '#002051'  # dark blue
+      COLOR_MT = '#7f7c75' # grey
+      COLOR_VAR = '#d5c164' #gold
+
+      axs[i_row,i_col].plot(res_merged['fpr'], res_merged['tpr'], c=COLOR_MERGED, lw=line_weight, label='merged')
+      axs[i_row,i_col].plot(res_mt['fpr'], res_mt['tpr'], c=COLOR_MT, lw=line_weight, label='mt')
+      axs[i_row,i_col].plot(res_var['fpr'], res_var['tpr'], c=COLOR_VAR, lw=line_weight, label='var')
+      axs[i_row,i_col].plot([0, 1], [0, 1], color="blue", lw=line_weight, linestyle="--")
+      axs[i_row,i_col].set_xlabel("False Positive Rate", fontsize=label_size)
+      axs[i_row,i_col].set_ylabel("True Positive Rate", fontsize=label_size)
+      axs[i_row,i_col].text(0.65, 0.25, 'AUC = {0:0.2f}'.format(res_merged['roc_auc'][0]), color=COLOR_MERGED)
+      axs[i_row,i_col].text(0.65, 0.15, 'AUC = {0:0.2f}'.format(res_mt['roc_auc'][0]), color=COLOR_MT)
+      axs[i_row,i_col].text(0.65, 0.05, 'AUC = {0:0.2f}'.format(res_var['roc_auc'][0]), color=COLOR_VAR)
+      axs[i_row,i_col].set_title(titles_dict[config], fontsize=title_size)
+
+  handles, labels = axs[1,2].get_legend_handles_labels()
+  fig.legend(handles, labels, loc='upper left')
+
+  plt.suptitle('ROC curves - {} ({})'.format(model_name.upper(), r'$c=0.8$'))
+  plt.savefig(ARGS.out)
 
 def view_single(model_name):
   substr = model_name.split('_')
@@ -83,33 +122,10 @@ def view_single(model_name):
   
   output_roc_pr_curves(data_list, model_name)
 
-def create_agg_curves():
-  data_dict = {
-      'fpr': [],
-      'tpr': [],
-      'precision': [],  
-      'recall': [],
-      'roc_auc': [],
-      'pr_auc': []
-    }
-
-  for name in glob.glob('{}/logit/merged/*'.format(ARGS.evaluation_res)):
-    with open(name, 'r') as json_file:
-      eval_res = json.load(json_file)
-      data_dict['fpr'].append(eval_res['fpr']['1'])
-      data_dict['tpr'].append(eval_res['tpr']['1'])
-      data_dict['precision'].append(eval_res['precision']['1'])
-      data_dict['recall'].append(eval_res['recall']['1'])
-      data_dict['roc_auc'].append(eval_res['roc_auc']['pos'])
-      data_dict['pr_auc'].append(eval_res['pr_auc']['pos'])
-
-  agg_curve = agg_curves(data_dict)
-
-  with open('./test_res/svc/svc_agg_07_var.json', 'w') as outfile:
-    json.dump(agg_curve, outfile, cls=NpEnconder)
-
 def main():
-  create_agg_curves()
+  datasets = []
+
+  display_roc_curves_grid()
 
   # view_single(ARGS.view_single)
 

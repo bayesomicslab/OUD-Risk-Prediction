@@ -1,5 +1,14 @@
+'''
+@author: Sybille M. Legitime
+
+Perform model selection with RandomizedSearch CV and GridSearchCV
+Scoring: PR AUC (average precision)
+'''
+
 import argparse
+import time
 import json
+import logging
 import pandas as pd
 import numpy as np
 import xgboost as xgb
@@ -175,7 +184,7 @@ gbc_search = RandomizedSearchCV(gbc_pipeline, gbc_space, scoring=SCORING_METRIC,
 
 # XGBoost
 xgb_pipeline = Pipeline([
-  # ('scale', StandardScaler()),
+  ('scale', StandardScaler()),
   ('clf', xgb.XGBClassifier(use_label_encoder=False))
 ])
 
@@ -190,48 +199,30 @@ xgb_space = {
 
 xgb_search = RandomizedSearchCV(xgb_pipeline, xgb_space, scoring=SCORING_METRIC, n_iter=N_ITERS, cv=cv, random_state=SEED, n_jobs=-1)
 
-def do_model_selection(X, y):
+def display_search_stats(clf, t0, logging, model):
+  logging.info('done in {0:.3f}s'.format(time() - t0))
+  logging.info('Best estimator found for {} by hyperparam search:'.format(model))
+  logging.info(clf.best_estimator_)
+  logging.info('---------------------------------------------------------------------------')
+
+def do_model_selection(X, y, logging):
   selected_models = dict()
 
-  # Logistic Regression
-  lr_search.fit(X, y)
-  print(lr_search.best_params_)
-  selected_models['logit'] = lr_search.best_params_
+  models_dict = {
+    'logit': lr_search,
+    'svc': svm_search,
+    'knn': knn_search,
+    'dt': dt_search,
+    'rf': rf_search,
+    'ada': ada_search,
+    'gbc': gbc_search
+  }
 
-  # SVM
-  svm_search.fit(X, y)
-  print(svm_search.best_params_)
-  selected_models['svc'] = svm_search.best_params_
-
-  # K-Nearest Neighbors
-  knn_search.fit(X, y)
-  print(knn_search.best_params_)
-  selected_models['knn'] = knn_search.best_params_
-
-  # Decision Tree
-  dt_search.fit(X, y)
-  print(dt_search.best_params_)
-  selected_models['dt'] = dt_search.best_params_
-
-  # Random Forest
-  rf_search.fit(X, y)
-  print(rf_search.best_params_)
-  selected_models['rf'] = rf_search.best_params_
-
-  # AdaBoost
-  ada_search.fit(X, y)
-  print(ada_search.best_params_)
-  selected_models['ada'] = ada_search.best_params_
-
-  # Gradient Boosting Classifier
-  gbc_search.fit(X, y)
-  print(gbc_search.best_params_)
-  selected_models['gbc'] = gbc_search.best_params_
-
-  # XGBoost
-  # xgb_search.fit(X, y)
-  # print(xgb_search.best_params_)
-  # selected_models['xgb'] = xgb_search.best_params_
+  for model_name, model in models_dict.items():
+    t0 = time()
+    model.fit(X, y)
+    display_search_stats(model, t0, logging, model_name)
+    selected_models[model_name] = model.best_params_
 
   return selected_models
 
@@ -241,17 +232,20 @@ def write_file(models_dict, filename, message):
   print('Model params for {0} dataset written.'.format(message))
 
 def main():
+  LOG_FOLDER_PATH = '{}/logs'.format(ARGS.out)
+  logging.basicConfig(filename='{0}/model_selection.log'.format(LOG_FOLDER_PATH), level=logging.DEBUG)
+
   '''~~ MODEL SELECTION - MERGED DATA ~~'''
-  models_merged = do_model_selection(X, y)
+  models_merged = do_model_selection(X, y, logging)
   write_file(models_merged, 'models_merged', 'merged')
 
   '''~~ MODEL SELECTION - MOBILITY TRACE DATA ~~'''
   X_mt = X.iloc[:, :21].astype(float)
-  models_mt = do_model_selection(X_mt, y)
+  models_mt = do_model_selection(X_mt, y, logging)
   write_file(models_mt, 'models_mt', 'mobility trace')
 
   '''~~ MODEL SELECTION - VARIANTS DATA ~~'''
-  X_var = X.iloc[:, 21:].astype(float)
+  X_var = X.iloc[:, 21:].astype(float, logging)
   models_var = do_model_selection(X_var, y)
   write_file(models_var, 'models_var', 'genotype')    
 

@@ -1,3 +1,9 @@
+'''
+@author: Sybille M. Legitime
+
+Train and evaluate classifiers
+'''
+
 import argparse
 import json
 import pandas as pd

@@ -1,9 +1,16 @@
+'''
+@author: Sybille M. Legitime
+
+Search for proxy variants with strong associations to opioid use disorder (OUD)
+and opioid dependence (OD)
+'''
+
 import requests, sys
 import json
 from pathlib import Path
 import numpy as np
 
-variants = open('data_variants/oud_od_variants.txt').read().split('\n')
+variants = open('./data/data_variants/oud_od_variants.txt').read().split('\n')
 
 populations = dict(
   AFR = ['ACB', 'ASW', 'ESN', 'GWD', 'LWK', 'MSL', 'YRI'],
@@ -58,8 +65,6 @@ def retrieve_proxies(populations, variants):
         all_proxies = np.concatenate((all_proxies, data))
   return np.unique(all_proxies)
 
-proxy_variants = retrieve_proxies(populations, variants)
-# get_variants(variants, populations, 1.0, 300, 0.8)
 
 # Write text file with the retrieved proxy variants
 def output_proxies(filename, data):
@@ -68,4 +73,13 @@ def output_proxies(filename, data):
       textfile.write(element + "\n")
   textfile.close()
 
-output_proxies('proxy_variants.txt', proxy_variants)
+
+
+def main():
+  get_variants(variants, populations, 1.0, 300, 0.8) # fetch all associated variants from API
+  proxy_variants = retrieve_proxies(populations, variants) # preprocess variants and get proxies
+  output_proxies('proxy_variants.txt', proxy_variants) # output results
+
+
+if __name__ == '__main__':
+  main()

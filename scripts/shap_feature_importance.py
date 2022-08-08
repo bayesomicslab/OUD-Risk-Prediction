@@ -1,8 +1,16 @@
+'''
+@author: Sybille M. Legitime
+
+Calculate SHAP values using pre-selected classification models
+SHAP values are calculated for the test set
+'''
+
 import argparse
 import json
 import shap
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -21,13 +29,12 @@ parser.add_argument('--hyperparams', type=str, help='Path to hyperparameters fil
 parser.add_argument('--out', type=str, help='Path to ouput folder')
 ARGS, unparsed = parser.parse_known_args()
 
-N = 100
-
 CLUSTER_TYPES = {
     'tsc1': 'outdoors_rec', 'tsc2': 'profess_oth', 'tsc3': 'shop',
     'tsc4': 'food', 'tsc5': 'transport', 'tsc6': 'residence',
     'tsc7': 'university', 'tsc8': 'arts_entert', 'tsc9': 'nightlife',
-} 
+    'lgent': 'norment'
+}
 
 # Read in feature selection output file
 var_features_file = open(ARGS.var_features, 'r')
@@ -49,20 +56,15 @@ class NpEnconder(json.JSONEncoder):
       return bool(obj)
     return super(NpEnconder, self).default(obj)
 
-'''Read hyperparameter files'''
+'''
+    UTILS FUNCTION
+'''
+
 def read_hyperparams_file(hyperparams_file):
     with open(hyperparams_file, 'r') as json_file:
         model_hyperparams = json.load(json_file)
     return model_hyperparams
 
-'''Read datasets files'''
-def read_dataset(path):
-    datasets = dict()
-    for i in range(N):
-        datasets[i] = pd.read_csv('{0}/'.format(path))
-    return datasets
-
-'''Split dataset into train and test'''
 def split(dataset):
     dataset = pd.read_csv(dataset)
     X = dataset.iloc[:, :-1]
@@ -85,14 +87,37 @@ def train_and_explain(X_train, y_train, X_test, model, model_name):
         explainer = shap.TreeExplainer(model)
         tree_shap_values = explainer.shap_values(X_test)
         return tree_shap_values[0]
-     
 
-def train_models(datasets_path, n_datasets=N):
+def create_agg_shap_df(shap_values_dict, dataset_path, rr_geno, rr_mt):
+    for model in list(shap_values_dict.keys())[1:]:
+        model_df_agg = pd.DataFrame(shap_values_dict[model], columns=shap_values_dict['df_cols'])
+        model_df_agg.to_csv('{}/{}_agg_shap_values_geno_{}_mt_{}.csv'.format(dataset_path, model, rr_geno, rr_mt))
+
+def display_shap_summary_plot(shap_values_dict, model, X_test_df, out):
+    shap.summary_plot(
+        shap.Explanation(
+            np.array(shap_values_dict[model]), 
+            feature_names=shap_values_dict['df_cols']
+        ),
+        X_test_df,
+        show=False
+    )
+    plt.savefig(out)
+
+def display_shap_dep_plot(shap_values_dict, model, X_test_df, feature, out):
+    shap.dependence_plot(
+        feature,
+        np.array(shap_values_dict[model]),
+        X_test_df,
+    )
+    plt.savefig(out)
+
+def train_models(datasets_path, n_datasets=100):
     
     dataset_filename = 'data_geno_{}_mt_{}'.format(ARGS.rr_geno, ARGS.rr_mt)
 
     df = pd.read_csv('{0}/{1}_set_0.csv'.format(datasets_path, dataset_filename))
-    df.rename(columns=CLUSTER_TYPES)
+    df = df.rename(columns=CLUSTER_TYPES)
 
     df_cols = df.iloc[:, :21].columns.tolist() + features_list
     df_cols = [col.upper() for col in df_cols]
@@ -189,13 +214,16 @@ def aggregate_results(values_dict):
     return values_dict
 
 def main():
-    shap_values_dictionary, X_test_dict  = train_models(ARGS.dataset)
+    N = 100
 
-    shap_values_dictionary = aggregate_results(shap_values_dictionary)
-    write_results(shap_values_dictionary, 'agg_shap_values_geno_{}_mt_{}.json'.format(ARGS.rr_geno, ARGS.rr_mt))
+    shap_values_dictionary, X_test_dict  = train_models(ARGS.dataset, N)
 
-    agg_X_test_ = aggregate_results(X_test_dict)
-    write_results(agg_X_test_, 'agg_X_test_geno_{}_mt_{}.json'.format(ARGS.rr_geno, ARGS.rr_mt))
+    create_agg_shap_df(
+        shap_values_dictionary, ARGS.dataset, ARGS.rr_geno, ARGS.rr_mt
+    )
+
+    agg_X_df = pd.DataFrame(X_test_dict['X_test'], columns=X_test_dict['df_cols'])
+    agg_X_df.to_csv('{}/agg_X_test_geno_{}_mt_{}.csv'.format(ARGS.dataset, ARGS.rr_geno, ARGS.rr_mt))
     
 
 if __name__ == '__main__':
