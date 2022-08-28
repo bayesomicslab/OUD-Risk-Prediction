@@ -130,7 +130,7 @@ class KDTree:
 
         return self.__query_helper(self.tree,query, k)
 
-if __name__ = '__main__':
+if __name__ == '__main__':
 
     data = 'scraper/data/newData.csv'
     location_data = pd.read_csv(data,sep='\t')

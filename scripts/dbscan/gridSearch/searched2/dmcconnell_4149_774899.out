@@ -1,2 +1,0 @@
- /home/CAM/daguiar/bin/time -f '%E elapsed,%U user,%S system,%M memory,%K avgmem, %x status' python3 gridSearch.py ../testing/189538_p2_5thcollumn.csv 
-slurmstepd: error: *** JOB 774899 ON xanadu-20 CANCELLED AT 2020-03-14T22:52:04 ***

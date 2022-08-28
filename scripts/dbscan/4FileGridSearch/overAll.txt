@@ -1,5 +1,0 @@
-Average Change in clusters 9.120982142857143 for the files 189538
-Average Change in clusters 15.069642857142858 for the files 165395
-Average Change in clusters 27.62589285714286 for the files 170707
-Average Change in clusters 18.285714285714285 for the files 167850
-AVERAGE CAHNGE PER TEST 0.025755545630489776
